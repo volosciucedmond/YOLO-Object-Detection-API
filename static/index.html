@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YOLO26 Object Detection</title>
+    <style>
+        /* basic styling and layout */
+        body {
+            font-family: 'Segoe UI', sans-serif; 
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            background: white; 
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+        }
+
+        /* upload area */
+        .upload-area {
+            border: 2px dashed #cbd5e0;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 20px; 
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .upload-area:hover {
+            border-color: #4299e1; 
+            background: #ebf8ff;
+        }
+        button {
+            background: #4299e1;
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        button:hover { 
+            background: #3182ce; 
+        }
+
+        /* result area */
+        .result-section {
+            display: none;
+            margin-top: 30px;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+        .result-image {
+            width: 100%;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            margin-bottom: 20px;
+        }
+
+        /* list table for detected objects */
+        .stats-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        .stats-table th, .stats-table td {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+        }
+        .stats-table th {
+            background: #f8f9fa;
+            color: #666;
+            font-weight: 600;
+        }
+        .tag {
+            background: #e2e8f0;
+            color: #2c3e50;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            font-weight: bold;
+            color:#2d3748;
+        }
+    </style>
+</head>
+<body>
+<div class="container">    
+    <h1>Yolo Object Detector</h1>
+    <div class = "upload-area">
+        <input type="file" id="fileInput" accept="image/*">
+        <br><br>
+        <button onclick="upload()">Upload and Detect</button>
+    </div>
+
+    <div id="loading" style="display:none; text-align:center;">
+        <p>Processing image, please wait...</p>
+    </div>
+
+    <div class = "result-section" id="resultSection">
+        <h3> Detection results </h3>
+
+        <img id="resultImage" class="result-image" src="" alt="Detection Result">
+
+        <h4>The objects in the image are: </h4>
+        <table class="stats-table">
+            <thead>
+                <tr>
+                    <th> Object Class </th>
+                    <th> Confidence </th>
+                    <th> Location (Box) </th>
+                </tr>
+            </thead>
+            <tbody id="statsBody"></tbody>
+        </table>
+    </div>
+</div>
+    <script>
+        /* handling the image upload and API communication */
+        async function upload() {
+            const input = document.getElementById('fileInput');
+            const file = input.files[0];
+
+            // if no file was selected
+            if (!file) {
+                alert("Please select a file first!");
+                return;
+            }
+
+            // if file is not image return error
+            if (!file.type.startsWith('image/')) {
+                alert("Please select an image file!");
+                return;
+            }
+
+            // show loading message and hide old results
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('resultSection').style.display = 'none';
+
+            // data preparation
+            // use FormData to encode the binary image file
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                // send to API
+                const response = await fetch('/detect', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // show image 
+                    // (?=...) to bypass caching and ensure user sees the newly processed image
+                    document.getElementById('resultImage').src = data.image_url + "?t=" + new Date().getTime();
+
+                    // build list (tabel) 
+                    const tbody = document.getElementById('statsBody');
+                    tbody.innerHTML = ""; //clear old results
+
+                    data.detections.forEach(d => {
+                        const row = `<tr>
+                            <td> <span class = "tag"> ${d.class} </span> </td>
+                            <td> ${(d.confidence * 100).toFixed(2)}% </td>
+                            <td style="font-family: monospace; font-size:0.85em;"> ${JSON.stringify(d.bbox)} </td>
+                            </tr>`;
+                    tbody.innerHTML += row;
+                });
+                // return results
+                document.getElementById('resultSection').style.display = 'block';
+        }
+    } catch (error) {
+        console.error(error);
+        alert("Error connecting to API");
+    } finally {
+        // hide loading spinner, even if error happened
+        document.getElementById('loading').style.display = 'none';
+    }
+}
+    </script>
+</body>
+
+</html>

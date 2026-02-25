@@ -1,0 +1,34 @@
+# python & environment
+venv/
+__pycache__/
+.env
+
+# yolo artifacts
+runs/
+*.pt
+
+# User Uploads & Results (Keep folders, ignore content)
+static/uploads/*
+static/results/*
+static/batch_results/*
+!static/uploads/.gitkeep  
+!static/results/.gitkeep
+!static/batch_results/.gitkeep
+
+# OS Junk
+.DS_Store
+
+# ignore local test images
+*.jpg
+*.jpeg
+*.png
+
+# exception for new dataset
+!custom_dataset/*.jpg
+!custom_dataset/*.jpeg
+!custom_dataset/*.png
+
+# exception for README
+!docs/*.jpg
+!docs/*.png
+!docs/*.jpeg
