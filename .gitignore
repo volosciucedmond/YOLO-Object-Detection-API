@@ -1,14 +1,14 @@
-# python & environment
+# Python & Environment
 venv/
 __pycache__/
 .env
-python-dotenv
+.ipynb_checkpoints/
 
-# yolo artifacts
+# YOLO Artifacts
 runs/
 *.pt
 
-# User Uploads & Results (Keep folders, ignore content)
+# User Uploads & Results
 static/uploads/*
 static/results/*
 static/batch_results/*
@@ -16,23 +16,12 @@ static/batch_results/*
 !static/results/.gitkeep
 !static/batch_results/.gitkeep
 
-# OS Junk
-.DS_Store
+# Application logs
+app.log
 
-# ignore local test images
+# Ignore local test images except docs
 *.jpg
 *.jpeg
 *.png
-
-# exception for new dataset
-!custom_dataset/*.jpg
-!custom_dataset/*.jpeg
-!custom_dataset/*.png
-
-# exception for README
-!docs/*.jpg
-!docs/*.png
-!docs/*.jpeg
-
-# Application logs
-app.log
+!docs/
+!custom_dataset/

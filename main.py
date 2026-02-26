@@ -95,7 +95,7 @@ def detect_objects(file: UploadFile = File(...)):
         
         logger.info(f"File processed: {filename} | Detectiosn found: {len(detections)}")
         for d in detections:
-            logger.debug(f"Detected: {d['class']} ({d['confidence']:.2f}) at {d['box']}")
+            logger.debug(f"Detected: {d['class']} ({d['confidence']:.2f}) at {d['bbox']}")
         
         return {"success": True,
                 "filename": filename,
