@@ -1,0 +1,18 @@
+services:
+  yolo-detector:
+    build: .
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+    container_name: yolo-detector
+    #load the .env file automatically
+    env_file:
+      - .env
+    ports:
+      - "8001:8001"
+    volumes:
+    # Syncs your local results folder with the container
+      - ./static/results:/app/static/results
+      # Syncs the log file so you can read it on your host machine
+      # - ./app.log:/app/app.log
+    restart: unless-stopped

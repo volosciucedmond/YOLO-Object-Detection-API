@@ -1,47 +1,58 @@
-from ultralytics import YOLO
+import os
+import logging
 import cv2
 import numpy as np
+from ultralytics import YOLO
+
+# get the logger defined in main.py
+logger = logging.getLogger("YOLO-API.detector")
 
 class ObjectDetector:
-    def __init__(self, model_path = "yolo26n.pt"):
-        """
-        This initialises the YOLO model only once, when the server starts.
-        This saves us some seconds on every request.
-        """
-        print(f"Loading model '{model_path}'")
-        self.model = YOLO(model_path)
+    def __init__(self, model_path: str = "yolo26n.pt"):
+        """Initialises the YOLO model once during server startup to optimise perforamnce"""
         
-        if self.model is not None:
-            print("Model loaded successfully.")
-            
+        logger.info (f"Attempting to load YOLO model from: {model_path}")
+        try:
+            self.model = YOLO(model_path)
+            # default confidence threshold from environment or fallback to 0.35
+            self.default_conf = float(os.getenv("CONFIDENCE_THRESHOLD", 0.35))
+            logger.info(f"YOLO model loaded successfully with confidence threshold: {self.default_conf}")
+        except Exception as e:
+            logger.error(f"Failed to initialise YOLO model: {e}", exc_info=True)
+            raise
+        
     def predict(self, image_bytes: bytes):
-        # take the image bytes and convert it to numpy array
-        nparr = np.frombuffer(image_bytes, np.uint8)
+        """ Processes image bytes, performs detection and returns annotated image and data. """
+        try:
+            # convert image bytes to numpy array
+            nparr = np.frombuffer(image_bytes, np.uint8)
             
-        # get a standard BGR imgage (OpenCV's default colour format)
-        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+            # decode to standard bgr image
+            img = cv2.imdecode(nparr, cv2. IMREAD_COLOR)
             
-        # encoding check
-        if img is None:
+            if img is None:
+                logger.warning("Image decoding failed: Received invalid bytes or unsupported format.")
+                return None, None
+            
+            # perform prediction using the configurable threshold
+            results = self.model.predict(img, conf=self.default_conf)
+            result = results[0]
+            
+            # generated the visual representation (plotted bounding boxes)
+            detected_img = result.plot()
+            
+            # extract detection data into a clean JSON-ready format
+            detections = []
+            for box in result.boxes: 
+                detections.append({
+                    "class": result.names[int(box.cls)],
+                    "confidence": round(float(box.conf), 4),
+                    "bbox": [round(coord, 2) for coord in box.xyxy.tolist()[0]]
+                })
+                
+            logger.debug(f"Detection successful. Found {len(detections)} objects.")
+            return detected_img, detections
+        
+        except Exception as e:
+            logger.error(f"Error during prediction: {e}", exc_info=True)
             return None, None
-            
-        """
-        We want to return only the images that have confidence > 35% 
-        Also, the result is a list, so because we send a single image, we take index 0
-        """
-        results = self.model.predict(img, conf=0.35)
-        result = results[0]
-            
-        # create visual result
-        detected_img = result.plot()
-            
-        # create json output
-        detections = []
-        for box in result.boxes:
-            # we need to convert tensor values to Python types
-            detections.append({
-                "class": result.names[int(box.cls)],    # gets the class name
-                "confidence": float(box.conf),          # gets the confidence score
-                "bbox": box.xyxy.tolist()[0]            # gets the positions of the box corners
-            })
-        return detected_img, detections

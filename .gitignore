@@ -2,6 +2,7 @@
 venv/
 __pycache__/
 .env
+python-dotenv
 
 # yolo artifacts
 runs/
@@ -32,3 +33,6 @@ static/batch_results/*
 !docs/*.jpg
 !docs/*.png
 !docs/*.jpeg
+
+# Application logs
+app.log
